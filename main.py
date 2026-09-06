@@ -5,6 +5,17 @@ import os
 import asyncio
 import random
 import datetime
+import shutil
+import subprocess
+
+# Installe FFmpeg au démarrage
+async def setup_ffmpeg():
+    if not shutil.which("ffmpeg"):
+        try:
+            subprocess.run(["apt-get", "update"], check=True)
+            subprocess.run(["apt-get", "install", "-y", "ffmpeg"], check=True)
+        except:
+            pass
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,6 +35,7 @@ messages_bienvenue = {}
 
 @bot.event
 async def on_ready():
+    await setup_ffmpeg()  # ← AJOUTE CETTE LIGNE ICI !
     print(f"{bot.user} est connecté !")
 
 
