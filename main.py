@@ -88,7 +88,7 @@ async def on_member_join(membre):
 
     await salon_logs.send(embed=embed)
 
-        role_retire = anciens_roles - nouveaux_roles
+role_retire = anciens_roles - nouveaux_roles
         if role_retire:
             for role in role_retire:
                 if role.name == "@everyone":
