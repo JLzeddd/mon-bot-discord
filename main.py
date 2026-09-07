@@ -38,7 +38,7 @@ async def on_ready():
     print(f"{bot.user} est connecté !")
 
 # ==================================================
-# ✅ LOGS DE RÔLES (ajout/retrait + qui l'a fait)
+# ✅ LOGS DE RÔLES — VERSION SANS DOUBLON
 # ==================================================
 @bot.event
 async def on_member_update(ancien_membre, nouveau_membre):
@@ -52,52 +52,52 @@ async def on_member_update(ancien_membre, nouveau_membre):
     anciens_roles = set(ancien_membre.roles)
     nouveaux_roles = set(nouveau_membre.roles)
 
-    role_retire = anciens_roles - nouveaux_roles
-    role_ajoute = nouveaux_roles - anciens_roles
+    role_retire = list(anciens_roles - nouveaux_roles)
+    role_ajoute = list(nouveaux_roles - anciens_roles)
 
-    # RÔLE RETIRÉ
+    # Retire @everyone de la liste
+    role_retire = [r for r in role_retire if r.name != "@everyone"]
+    role_ajoute = [r for r in role_ajoute if r.name != "@everyone"]
+
+    # === RÔLES RETIRÉS — UN SEUL MESSAGE ===
     if role_retire:
-        for role in role_retire:
-            if role.name == "@everyone":
-                continue
+        roles_texte = "\n".join(f"• {r.mention}" for r in role_retire)
 
-            auteur = "❓ Impossible à déterminer"
-            try:
-                async for entree in ancien_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
-                    if entree.target == nouveau_membre and role in getattr(entree.before, 'roles', set()):
-                        auteur = entree.user.mention
-                        break
-            except Exception as e:
-                print(f"Erreur logs : {e}")
+        auteur = "❓ Impossible à déterminer"
+        try:
+            async for entree in ancien_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
+                if entree.target == nouveau_membre:
+                    auteur = entree.user.mention
+                    break
+        except Exception as e:
+            print(f"Erreur logs : {e}")
 
-            embed = discord.Embed(title="❌ RÔLE RETIRÉ", color=discord.Color.red())
-            embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
-            embed.add_field(name="Rôle retiré", value=f"{role.mention}", inline=False)
-            embed.add_field(name="Par", value=auteur, inline=False)
-            embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
-            await salon_logs.send(embed=embed)
+        embed = discord.Embed(title="❌ RÔLE(S) RETIRÉ(S)", color=discord.Color.red())
+        embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
+        embed.add_field(name="Rôle(s) retiré(s)", value=roles_texte, inline=False)
+        embed.add_field(name="Par", value=auteur, inline=False)
+        embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
+        await salon_logs.send(embed=embed)
 
-    # RÔLE AJOUTÉ
+    # === RÔLES AJOUTÉS — UN SEUL MESSAGE ===
     if role_ajoute:
-        for role in role_ajoute:
-            if role.name == "@everyone":
-                continue
+        roles_texte = "\n".join(f"• {r.mention}" for r in role_ajoute)
 
-            auteur = "❓ Impossible à déterminer"
-            try:
-                async for entree in nouveau_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
-                    if entree.target == nouveau_membre and role in getattr(entree.after, 'roles', set()):
-                        auteur = entree.user.mention
-                        break
-            except Exception as e:
-                print(f"Erreur logs : {e}")
+        auteur = "❓ Impossible à déterminer"
+        try:
+            async for entree in nouveau_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
+                if entree.target == nouveau_membre:
+                    auteur = entree.user.mention
+                    break
+        except Exception as e:
+            print(f"Erreur logs : {e}")
 
-            embed = discord.Embed(title="✅ RÔLE AJOUTÉ", color=discord.Color.green())
-            embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
-            embed.add_field(name="Rôle ajouté", value=f"{role.mention}", inline=False)
-            embed.add_field(name="Par", value=auteur, inline=False)
-            embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
-            await salon_logs.send(embed=embed)
+        embed = discord.Embed(title="✅ RÔLE(S) AJOUTÉ(S)", color=discord.Color.green())
+        embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
+        embed.add_field(name="Rôle(s) ajouté(s)", value=roles_texte, inline=False)
+        embed.add_field(name="Par", value=auteur, inline=False)
+        embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
+        await salon_logs.send(embed=embed)
 
     # === MISE À JOUR AUTO DU MESSAGE DE BIENVENUE ===
     if nouveau_membre.id not in messages_bienvenue:
@@ -112,9 +112,7 @@ async def on_member_update(ancien_membre, nouveau_membre):
     except:
         return
 
-    anciens_roles_set = set(ancien_membre.roles)
-    nouveaux_roles_set = set(nouveau_membre.roles)
-    if anciens_roles_set == nouveaux_roles_set:
+    if anciens_roles == nouveaux_roles:
         return
 
     nb_roles = len(nouveau_membre.roles) - 1
