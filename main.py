@@ -89,23 +89,27 @@ async def on_member_join(membre):
     await salon_logs.send(embed=embed)
 
 role_retire = anciens_roles - nouveaux_roles
-        if role_retire:
-            for role in role_retire:
-                if role.name == "@everyone":
-                    continue
-                auteur = "❓ Impossible à déterminer"
-                try:
-                    async for entree in ancien_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
-                        if entree.target == nouveau_membre and role in getattr(entree.before, 'roles', set()):
-                            auteur = entree.user.mention
-                            break
-                except Exception as e:
-                    print(f"Erreur logs : {e}")
-                embed = discord.Embed(title="❌ RÔLE RETIRÉ", color=discord.Color.red())
-                embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
-                embed.add_field(name="Rôle retiré", value=f"{role.mention}", inline=False)
-                embed.add_field(name="Par", value=auteur, inline=False)
-                embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
+role_ajoute = nouveaux_roles - anciens_roles
+
+if role_retire:
+    for role in role_retire:
+        if role.name == "@everyone":
+            continue
+
+    auteur = "❓ Impossible à déterminer"
+    try:
+        async for entree in ancien_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
+            if entree.target == nouveau_membre and role in getattr(entree.before, 'roles', set()):
+                auteur = entree.user.mention
+                break
+    except Exception as e:
+        print(f"Erreur logs : {e}")
+
+    embed = discord.Embed(title="❌ RÔLE RETIRÉ", color=discord.Color.red())
+    embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
+    embed.add_field(name="Rôle retiré", value=f"{role.mention}", inline=False)
+    embed.add_field(name="Par", value=auteur, inline=False)
+    embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
                 await salon_logs.send(embed=embed)
 
     # === MISE À JOUR DU MESSAGE DE BIENVENUE ===
