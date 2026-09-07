@@ -2,11 +2,14 @@ import discord
 from discord.ext import commands
 from gtts import gTTS
 import os
+from dotenv import load_dotenv
 import asyncio
 import random
 import datetime
 import shutil
 import subprocess
+
+load_dotenv()
 
 # Installe FFmpeg au démarrage
 async def setup_ffmpeg():
