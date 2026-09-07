@@ -318,6 +318,13 @@ async def aide(ctx):
 async def on_command(ctx):
     print(f"📝 {ctx.author} → {ctx.command.name}")
 
+print("ENV existe :", os.path.exists("/home/container/.env"), flush=True)
+
+with open("/home/container/.env", "r", encoding="utf-8") as f:
+    contenu_env = f.read()
+
+print("TOKEN présent dans .env :", "TOKEN=" in contenu_env, flush=True)
+
 TOKEN = os.getenv("TOKEN")
 print("TOKEN chargé :", bool(TOKEN))
 bot.run(TOKEN)
