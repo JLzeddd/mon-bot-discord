@@ -9,7 +9,7 @@ import datetime
 import shutil
 import subprocess
 
-load_dotenv()
+load_dotenv("/home/container/.env")
 
 
 # Installe FFmpeg au démarrage
@@ -319,4 +319,5 @@ async def on_command(ctx):
     print(f"📝 {ctx.author} → {ctx.command.name}")
 
 TOKEN = os.getenv("TOKEN")
+print("TOKEN chargé :", bool(TOKEN))
 bot.run(TOKEN)
