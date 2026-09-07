@@ -171,7 +171,7 @@ async def on_member_join(membre):
 
     date_rejoint = datetime.datetime.now().strftime("%d/%m/%Y à %H:%M:%S")
     date_creation = membre.created_at.strftime("%d/%m/%Y à %H:%M:%S")
-    age_compte = datetime.datetime.now() - membre.created_at
+    age_compte = datetime.datetime.now(datetime.timezone.utc) - membre.created_at
     jours = age_compte.days
     annees = jours // 365
     mois_restants = (jours % 365) // 30
