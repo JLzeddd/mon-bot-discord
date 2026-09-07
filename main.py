@@ -26,9 +26,8 @@ bot = commands.Bot(command_prefix=";", intents=intents)
 bot.remove_command("help")
 
 # ==================== SALONS CONFIGURÉS ====================
-SALON_LOGS_ROLES_ID = 1535831171726971061
-SALON_BIENVENUE_ID = 1546103059925438464
-SALON_LOGS_ID = 1536491649398743100
+SALON_LOGS_ROLES_ID = 1535831171726971061    # Logs rôles
+SALON_BIENVENUE_ID = 1546103059925438464     # Message bienvenue + mise à jour auto
 # ============================================================
 
 messages_bienvenue = {}
@@ -39,7 +38,7 @@ async def on_ready():
     print(f"{bot.user} est connecté !")
 
 # ==================================================
-# ✅ LOGS DE RÔLES
+# ✅ LOGS DE RÔLES (ajout/retrait + qui l'a fait)
 # ==================================================
 @bot.event
 async def on_member_update(ancien_membre, nouveau_membre):
@@ -56,6 +55,7 @@ async def on_member_update(ancien_membre, nouveau_membre):
     role_retire = anciens_roles - nouveaux_roles
     role_ajoute = nouveaux_roles - anciens_roles
 
+    # RÔLE RETIRÉ
     if role_retire:
         for role in role_retire:
             if role.name == "@everyone":
@@ -77,6 +77,7 @@ async def on_member_update(ancien_membre, nouveau_membre):
             embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
             await salon_logs.send(embed=embed)
 
+    # RÔLE AJOUTÉ
     if role_ajoute:
         for role in role_ajoute:
             if role.name == "@everyone":
@@ -98,7 +99,7 @@ async def on_member_update(ancien_membre, nouveau_membre):
             embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
             await salon_logs.send(embed=embed)
 
-    # === MISE À JOUR DU MESSAGE DE BIENVENUE ===
+    # === MISE À JOUR AUTO DU MESSAGE DE BIENVENUE ===
     if nouveau_membre.id not in messages_bienvenue:
         return
 
@@ -159,15 +160,34 @@ async def on_member_update(ancien_membre, nouveau_membre):
     print(f"🔄 MAJ : {nouveau_membre.name}")
 
 # ==================================================
-# 📊 LOGS ARRIVÉE EN ROSE
+# ✅ MESSAGE BIENVENUE À L'ARRIVÉE + MISE À JOUR
 # ==================================================
-
-    # Envoie aussi le message dans le salon bienvenue
+@bot.event
+async def on_member_join(membre):
     salon = bot.get_channel(SALON_BIENVENUE_ID)
     if not salon:
         return
 
+    maintenant = datetime.datetime.now(datetime.timezone.utc)
     date_rejoint = maintenant.strftime("%d/%m/%Y à %H:%M:%S")
+    date_creation = membre.created_at.strftime("%d/%m/%Y à %H:%M:%S")
+    age_compte = maintenant - membre.created_at
+    jours = age_compte.days
+    annees = jours // 365
+    mois_restants = (jours % 365) // 30
+    jours_restants = jours % 30
+
+    if jours < 7:
+        anciennete = f"Compte neuf — {jours} jours"
+    elif jours < 30:
+        anciennete = f"Compte récent — {jours} jours"
+    elif jours < 180:
+        anciennete = f"Compte jeune — {mois_restants} mois {jours_restants} j"
+    elif jours < 365:
+        anciennete = f"Compte fiable — {mois_restants} mois {jours_restants} j"
+    else:
+        anciennete = f"Compte ancien — {annees} ans {mois_restants} mois"
+
     est_bot = "Bot" if membre.bot else "Membre réel"
     nb_roles = len(membre.roles) - 1
     role_plus_haut = membre.top_role.name if nb_roles > 0 else "Aucun rôle"
