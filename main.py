@@ -43,34 +43,50 @@ async def on_ready():
 # ✅ LOGS DE RÔLES
 # ==================================================
 @bot.event
-async def on_member_update(ancien_membre, nouveau_membre):
-    if nouveau_membre.bot:
+async def on_member_join(membre):
+    salon_logs = bot.get_channel(1536491649398743100)
+    if not salon_logs or membre.bot:
         return
 
-    salon_logs = bot.get_channel(SALON_LOGS_ROLES_ID)
-    if salon_logs:
-        anciens_roles = set(ancien_membre.roles)
-        nouveaux_roles = set(nouveau_membre.roles)
+    # Calcul de l'ancienneté CORRIGÉ
+    maintenant = datetime.datetime.now(datetime.timezone.utc)
+    age_compte = maintenant - membre.created_at
+    jours = age_compte.days
+    années = jours // 365
+    mois = (jours % 365) // 30
+    jours_restants = (jours % 365) % 30
 
-        role_ajoute = nouveaux_roles - anciens_roles
-        if role_ajoute:
-            for role in role_ajoute:
-                if role.name == "@everyone":
-                    continue
-                auteur = "❓ Impossible à déterminer"
-                try:
-                    async for entree in ancien_membre.guild.audit_logs(limit=10, action=discord.AuditLogAction.member_role_update):
-                        if entree.target == nouveau_membre and role in getattr(entree.after, 'roles', set()):
-                            auteur = entree.user.mention
-                            break
-                except Exception as e:
-                    print(f"Erreur logs : {e}")
-                embed = discord.Embed(title="✅ RÔLE AJOUTÉ", color=discord.Color.green())
-                embed.add_field(name="Membre concerné", value=f"{nouveau_membre.mention}", inline=False)
-                embed.add_field(name="Rôle ajouté", value=f"{role.mention}", inline=False)
-                embed.add_field(name="Par", value=auteur, inline=False)
-                embed.set_thumbnail(url=nouveau_membre.display_avatar.url)
-                await salon_logs.send(embed=embed)
+    if années > 0:
+        anciennete = f"Compte ancien — {années} an(s), {mois} mois et {jours_restants} jour(s)"
+    elif mois > 0:
+        anciennete = f"Compte récent — {mois} mois et {jours_restants} jour(s)"
+    else:
+        anciennete = f"Compte tout neuf — {jours_restants} jour(s)"
+
+    # Date formatée
+    date_creation = membre.created_at.strftime("%d/%m/%Y à %H:%M:%S")
+    date_arrivee = membre.joined_at.strftime("%d/%m/%Y à %H:%M:%S") if membre.joined_at else "Inconnu"
+
+    # Couleur de l'embed ROSE
+    embed = discord.Embed(
+        title="🎉 **NOUVEAU MEMBRE ARRIVÉ !**",
+        color=discord.Color.from_str("#FF69B4")  # ← ROSE
+    )
+
+    embed.add_field(name="👤 Membre", value=f"{membre.mention}", inline=False)
+    embed.add_field(name="📛 Pseudo Discord", value=f"{membre.name}", inline=True)
+    embed.add_field(name="🏷️ Surnom sur le serveur", value=f"{membre.nick if membre.nick else 'Aucun'}", inline=True)
+    embed.add_field(name="🆔 Identifiant unique", value=f"`{membre.id}`", inline=False)
+    embed.add_field(name="📅 Compte créé le", value=f"{date_creation}", inline=True)
+    embed.add_field(name="🚪 A rejoint le", value=f"{date_arrivee}", inline=True)
+    embed.add_field(name="⏳ Ancienneté du compte", value=f"{anciennete}", inline=False)
+    embed.add_field(name="🎨 Couleur du rang", value=f"#FF5DD6", inline=True)
+    embed.add_field(name="📋 Nombre de rôles", value=f"{len(membre.roles)-1}", inline=True)
+
+    embed.set_thumbnail(url=membre.display_avatar.url)
+    embed.set_footer(text=f"ID : {membre.id} • Mise à jour automatique")
+
+    await salon_logs.send(embed=embed)
 
         role_retire = anciens_roles - nouveaux_roles
         if role_retire:
