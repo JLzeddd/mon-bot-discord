@@ -161,45 +161,6 @@ async def on_member_update(ancien_membre, nouveau_membre):
 # ==================================================
 # 📊 LOGS ARRIVÉE EN ROSE
 # ==================================================
-@bot.event
-async def on_member_join(membre):
-    salon_logs = bot.get_channel(SALON_LOGS_ID)
-    if not salon_logs or membre.bot:
-        return
-
-    maintenant = datetime.datetime.now(datetime.timezone.utc)
-    age_compte = maintenant - membre.created_at
-    jours = age_compte.days
-    années = jours // 365
-    mois = (jours % 365) // 30
-    jours_restants = (jours % 365) % 30
-
-    if années > 0:
-        anciennete = f"Compte ancien — {années} an(s), {mois} mois et {jours_restants} jour(s)"
-    elif mois > 0:
-        anciennete = f"Compte récent — {mois} mois et {jours_restants} jour(s)"
-    else:
-        anciennete = f"Compte tout neuf — {jours_restants} jour(s)"
-
-    date_creation = membre.created_at.strftime("%d/%m/%Y à %H:%M:%S")
-    date_arrivee = membre.joined_at.strftime("%d/%m/%Y à %H:%M:%S") if membre.joined_at else "Inconnu"
-
-    embed = discord.Embed(
-        title="🎉 **NOUVEAU MEMBRE ARRIVÉ !**",
-        color=discord.Color.from_str("#FF69B4")
-    )
-    embed.add_field(name="👤 Membre", value=f"{membre.mention}", inline=False)
-    embed.add_field(name="📛 Pseudo Discord", value=f"{membre.name}", inline=True)
-    embed.add_field(name="🏷️ Surnom sur le serveur", value=f"{membre.nick if membre.nick else 'Aucun'}", inline=True)
-    embed.add_field(name="🆔 Identifiant unique", value=f"`{membre.id}`", inline=False)
-    embed.add_field(name="📅 Compte créé le", value=f"{date_creation}", inline=True)
-    embed.add_field(name="🚪 A rejoint le", value=f"{date_arrivee}", inline=True)
-    embed.add_field(name="⏳ Ancienneté du compte", value=f"{anciennete}", inline=False)
-    embed.add_field(name="🎨 Couleur du rang", value=f"#FF5DD6", inline=True)
-    embed.add_field(name="📋 Nombre de rôles", value=f"{len(membre.roles)-1}", inline=True)
-    embed.set_thumbnail(url=membre.display_avatar.url)
-    embed.set_footer(text=f"ID : {membre.id} • Mise à jour automatique")
-    await salon_logs.send(embed=embed)
 
     # Envoie aussi le message dans le salon bienvenue
     salon = bot.get_channel(SALON_BIENVENUE_ID)
